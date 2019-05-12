@@ -3,37 +3,19 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Arrays;
-import java.util.InputMismatchException;
-import java.util.Scanner;
+
 
 public class Main {
 
-    public static void main(String[] args) throws FileNotFoundException, IOException {
-        System.out.println("             ----MBR READER----");
-        System.out.println("RUN THIS PROGRAM WITH ADMINISTRATOR RIGHTS");
-        //Pysical Drive Number Input
-        Scanner sc=new Scanner(System.in);
-        StringBuilder DriveName = new StringBuilder();
-//        int dr;
-////        System.out.println("Enter the PhysicalDrive number. e.g 0,1,2..");
-////        try{
-////            dr=sc.nextInt();
-////            DriveName.append("\\\\.\\PhysicalDrive"+dr);
-////        }
-////        catch (InputMismatchException a){
-////
-////            System.out.println("Drive Number Format is incorrect");
-////            System.out.println("Press Enter to Exit");
-////            System.in.read();
-////            System.exit(0);
-////
-////        }
-////        String driveName=DriveName.toString();
-////        System.out.println(driveName);
-        String driveName = "\\\\.\\PhysicalDrive0";
 
-        //Boot Sector Input                                                                
-        String[] parts=diskRead(0,driveName);//diskRead is a function that reads from disk and returns a sector in an array
+    public static void main(String[] args) throws FileNotFoundException, IOException {
+
+        getLocalInfo();
+        String driveName = "\\\\.\\PhysicalDrive0";
+        String[] parts=diskRead(0,driveName);
+
+        System.out.println("Имя физического диска: " + driveName);
+        System.out.println();
 
         if((parts[450].equals("EE")) || (parts[450].equals("ee"))){
             System.out.println("The Drive does not have MBR partitioning Style. It has GPT Partitioning Style");
@@ -41,55 +23,52 @@ public class Main {
             System.in.read();
         }
         else{
-            //Partition Details
-            System.out.println("          ---MBR Partition Table: Entry 1---");
+            System.out.println("Раздел 1");
             long start1,end1,start2,end2,start3,end3,start4,end4,st1,en1;
-            partitionType(parts[450]);//patitionType is a function which tells partition type
-            String[] newArray = Arrays.copyOfRange(parts, 458, 462);//partition size
+
+            partitionType(parts[450]);
+            String[] newArray = Arrays.copyOfRange(parts, 458, 462);
             String s1=optimize(reverse(newArray));
-            //optimize is the function which removes the extra special characters from newArray that ae added due to copyOfRange() function
-            //reverse is the function which reverses the newArray so that size can be calculated
-            long a=hex2decimal(s1); //coversion of hexadecimal to decimal
+
+            long a=hex2decimal(s1);
             long size=(((a)*512)/1024)/1024;
-            newArray = Arrays.copyOfRange(parts, 447, 450);//starting chs
-            if(newArray[0].equals("FE") && newArray[1].equals("FF") && newArray[2].equals("FF"))
-            //For partitions which begin or end beyond  the 1024th cylinder, the three CHS bytes should always be filled with: FE FF FF
-            //Now using starting LBA and partition size to calculate the starting and ending sector
-            {
-                String[] newArray1=Arrays.copyOfRange(parts, 454, 458);//Starting LBA
+            newArray = Arrays.copyOfRange(parts, 447, 450);
+            if(newArray[0].equals("FE") && newArray[1].equals("FF") && newArray[2].equals("FF")) {
+                String[] newArray1=Arrays.copyOfRange(parts, 454, 458);
                 start1=(hex2decimal(optimize(reverse(newArray1))));
-                System.out.println("Starting sector: "+start1);
+                System.out.println("Начало сектора: "+start1);
                 end1=(start1+a)-1;
-                System.out.println("Ending sector: "+end1);
-                System.out.println("Partition Size: "+size+" MB");
+                System.out.println("Конец сектора: "+end1);
+                System.out.println("Размер сектора: "+size+" MB");
                 System.out.println("\n");
             }
-            else{
-                start1=sector(newArray);// sector is the function which returns the exact sector number
-                newArray = Arrays.copyOfRange(parts, 451, 454);//ending chs
+            else {
+                start1=sector(newArray);
+                newArray = Arrays.copyOfRange(parts, 451, 454);
                 if(newArray[0].equals("FE") && newArray[1].equals("FF") && newArray[2].equals("FF")){
                     end1=(start1+a)-1;
                 }
-                else{
-                    end1=sector(newArray);}
-                System.out.println("Starting sector: "+start1);
+                else {
+                    end1=sector(newArray);
+                }
+                System.out.println("Начало сектора: "+start1);
                 System.out.println("Ending sector: "+end1);
                 System.out.println("Partition Size: "+size+" MB");
                 System.out.println("\n");
             }
 
 
-            System.out.println("          ---MBR Partition Table: Entry 2---");
-            partitionType(parts[466]);//partition type
-            newArray = Arrays.copyOfRange(parts, 474, 478);//partition size474, 478467, 470
+            System.out.println("Раздел 2");
+            partitionType(parts[466]);
+            newArray = Arrays.copyOfRange(parts, 474, 478);
             s1=optimize(reverse(newArray));
             long b=hex2decimal(s1);
             size=(((b)*512)/1024)/1024;
-            newArray = Arrays.copyOfRange(parts, 463, 466);//starting chs
+            newArray = Arrays.copyOfRange(parts, 463, 466);
             if(newArray[0].equals("FE") && newArray[1].equals("FF") && newArray[2].equals("FF")){
-                String[] newArray1=Arrays.copyOfRange(parts, 470, 474);//Starting LBA
+                String[] newArray1=Arrays.copyOfRange(parts, 470, 474);
                 start2=(hex2decimal(optimize(reverse(newArray1))));
-                System.out.println("Starting sector: "+start2);
+                System.out.println("Начало сектора: "+start2);
                 end2=(start2+b)-1;
                 System.out.println("Ending sector: "+end2);
                 System.out.println("Partition Size: "+size+" MB");
@@ -97,7 +76,7 @@ public class Main {
             }
             else{
                 start2=sector(newArray);
-                newArray = Arrays.copyOfRange(parts, 467, 470);//ending chs
+                newArray = Arrays.copyOfRange(parts, 467, 470);
 
                 if(newArray[0].equals("FE") && newArray[1].equals("FF") && newArray[2].equals("FF")){
                     end2=(start2+b)-1;
@@ -106,26 +85,23 @@ public class Main {
                     end2=sector(newArray);}
                 if(!(parts[466].equals("00")))
                 {
-                    System.out.println("Starting sector: "+start2);
+                    System.out.println("Начало сектора: "+start2);
                     System.out.println("Ending sector: "+end2);
                     System.out.println("Partition Size: "+size+" MB");}
                 System.out.println("\n");
-
             }
 
-
-
-            System.out.println("          ---MBR Partition Table: Entry 3---");
-            partitionType(parts[482]);//partition type
-            newArray = Arrays.copyOfRange(parts, 490, 494);//partition size
+            System.out.println("Раздел 3");
+            partitionType(parts[482]);
+            newArray = Arrays.copyOfRange(parts, 490, 494);
             s1=optimize(reverse(newArray));
             long c=hex2decimal(s1);
             size=(((c)*512)/1024)/1024;
-            newArray = Arrays.copyOfRange(parts, 479, 482);//starting chs
+            newArray = Arrays.copyOfRange(parts, 479, 482);
             if(newArray[0].equals("FE") && newArray[1].equals("FF") && newArray[2].equals("FF")){
-                String[] newArray1=Arrays.copyOfRange(parts, 486, 490);//Starting LBA
+                String[] newArray1=Arrays.copyOfRange(parts, 486, 490);
                 start3=(hex2decimal(optimize(reverse(newArray1))));
-                System.out.println("Starting sector: "+start3);
+                System.out.println("Начало сектора: "+start3);
                 end3=(start3+c)-1;
                 System.out.println("Ending sector: "+end3);
                 System.out.println("Partition Size: "+size+" MB");
@@ -133,32 +109,31 @@ public class Main {
             }
             else{
                 start3=sector(newArray);
-                newArray = Arrays.copyOfRange(parts, 483, 486);//ending chs
+                newArray = Arrays.copyOfRange(parts, 483, 486);
                 if(newArray[0].equals("FE") && newArray[1].equals("FF") && newArray[2].equals("FF")){
                     end3=(start3+c)-1;
                 }
                 else{
                     end3=sector(newArray);}
                 if(!(parts[482].equals("00"))){
-                    System.out.println("Starting sector: "+start3);
+                    System.out.println("Начало сектора: "+start3);
                     System.out.println("Ending sector: "+end3);
                     System.out.println("Partition Size: "+size+" MB");}
                 System.out.println("\n");
 
             }
 
-
-            System.out.println("          ---MBR Partition Table: Entry 4---");
-            partitionType(parts[498]);// partition type
-            newArray = Arrays.copyOfRange(parts, 506, 510);//partition size
+            System.out.println("Раздел 4");
+            partitionType(parts[498]);
+            newArray = Arrays.copyOfRange(parts, 506, 510);
             s1=optimize(reverse(newArray));
             long d=hex2decimal(s1);
             size=(((d)*512)/1024)/1024;
-            newArray = Arrays.copyOfRange(parts, 495, 498);//starting chs
+            newArray = Arrays.copyOfRange(parts, 495, 498);
             if(newArray[0].equals("FE") && newArray[1].equals("FF") && newArray[2].equals("FF")){
-                String[] newArray1=Arrays.copyOfRange(parts, 502, 506);//Starting LBA
+                String[] newArray1=Arrays.copyOfRange(parts, 502, 506);
                 start4=(hex2decimal(optimize(reverse(newArray1))));
-                System.out.println("Starting sector: "+start4);
+                System.out.println("Начало сектора: "+start4);
                 end4=(start4+d)-1;
                 System.out.println("Ending sector: "+end4);
                 System.out.println("Partition Size: "+size+" MB");
@@ -166,66 +141,36 @@ public class Main {
             }
             else{
                 start4=sector(newArray);
-                newArray = Arrays.copyOfRange(parts, 499, 502);//ending chs
+                newArray = Arrays.copyOfRange(parts, 499, 502);
                 if(newArray[0].equals("FE") && newArray[1].equals("FF") && newArray[2].equals("FF")){
                     end4=(start4+d)-1;
                 }
                 else{
                     end4=sector(newArray);}
                 if(!(parts[498].equals("00"))){
-                    System.out.println("Starting sector: "+start4);
+                    System.out.println("Начало сектора: "+start4);
                     System.out.println("Ending sector: "+end4);
                     System.out.println("Partition Size: "+size+" MB");}
                 System.out.println("\n");
             }
-            String str1,str2;
-
-            //MBR is corrupted or Uncorrupted???
-            if(!(start2==0 && end2==0)){//checks is there any other partition or there is just one partition?
-                newArray = Arrays.copyOfRange(parts, 463, 466); String[] newArray1=Arrays.copyOfRange(parts, 467, 470);
-                str1=optimize(newArray);str2=optimize(newArray1);
-                if(!(str1.equals("FE FF FF") || str2.equals("FE FF FF"))){
-                    if(start2==(end1+1)){
-                        if(!(start3==0 && end3==0)){//checks is there any other partition or there are just two partitions?
-                            newArray = Arrays.copyOfRange(parts, 479, 482); newArray1=Arrays.copyOfRange(parts, 483, 486);
-                            str1=optimize(newArray);str2=optimize(newArray1);
-                            if(!(str1.equals("FE FF FF") || str2.equals("FE FF FF"))){
-                                if(start3==(end2+1)){
-                                    if(!(start4==0 && end4==0)){//checks is there any other partition or there are just three partitions?
-                                        newArray = Arrays.copyOfRange(parts, 495, 498);newArray1=Arrays.copyOfRange(parts, 499, 502);
-                                        str1=optimize(newArray);str2=optimize(newArray1);
-                                        if(!(str1.equals("FE FF FF") || str2.equals("FE FF FF"))){
-                                            if(start4==(end3+1)){
-                                                System.out.println("MBR is Uncorrupted \n");
-                                            }else System.out.println("MBR is Corrupted \n");
-                                        }else System.out.println("MBR is Uncorrupted \n");
-                                    }else System.out.println("MBR is Uncorrupted \n");
-                                }else System.out.println("MBR is Corrucorruptedpted \n");
-                            }else System.out.println("MBR is Uncorrupted \n");
-                        }else System.out.println("MBR is Uncorrupted \n");
-                    }else System.out.println("MBR is Corrupted \n");
-                }else System.out.println("MBR is Uncorrupted \n");
-            }else System.out.println("MBR is Uncorrupted \n");
 
 
-
-//Extended Partition details
             if(parts[498].equals("05")){
                 int i=1;
-                System.out.println("          ---Extended Partitions---");
+                System.out.println("Расширеные разделы");
                 do{
                     System.out.println("Extended partition "+i);
                     parts=diskRead((start4)*512,driveName);
-                    partitionType(parts[450]);//patition type
-                    newArray = Arrays.copyOfRange(parts, 458, 462);//partition size
+                    partitionType(parts[450]);
+                    newArray = Arrays.copyOfRange(parts, 458, 462);
                     s1=optimize(reverse(newArray));
                     long a1=hex2decimal(s1);
                     size=(((a1)*512)/1024)/1024;
-                    newArray = Arrays.copyOfRange(parts, 447, 450);//starting chs
+                    newArray = Arrays.copyOfRange(parts, 447, 450);
                     if(newArray[0].equals("FE") && newArray[1].equals("FF") && newArray[2].equals("FF")){
-                        String[] newArray1=Arrays.copyOfRange(parts, 454, 458);//Starting LBA
+                        String[] newArray1=Arrays.copyOfRange(parts, 454, 458);
                         st1=(hex2decimal(optimize(reverse(newArray1))))+start4;
-                        System.out.println("Starting sector: "+st1);
+                        System.out.println("Начало сектора: "+st1);
                         en1=(st1+a1)-1;
                         System.out.println("Ending sector: "+en1);
                         System.out.println("Partition Size: "+size+" MB");
@@ -233,8 +178,8 @@ public class Main {
                     }
                     else{
                         st1=sector(newArray)+start4;
-                        System.out.println("Starting sector: "+st1);
-                        newArray = Arrays.copyOfRange(parts, 451, 454);//ending chs
+                        System.out.println("Начало сектора: "+st1);
+                        newArray = Arrays.copyOfRange(parts, 451, 454);
                         if(newArray[0].equals("FE") && newArray[1].equals("FF") && newArray[2].equals("FF")){
                             en1=((st1+a1)-1);
                         }
@@ -251,9 +196,29 @@ public class Main {
             }
 
             size=(((a+b+c+d)*512)/1024)/1024;
-            System.out.println("Total Allocated Space: "+size+" MB");
-            System.out.println("Press Enter to Exit");
+            System.out.println("Общий размер: "+size+" MB");
+            System.out.println("Нажмите энтер чтобы выйти");
             System.in.read();
+        }
+    }
+
+    public static void getLocalInfo() throws IOException {
+        File[] roots = File.listRoots();
+        String name ="\\\\.\\";
+        for (File file: roots) {
+            System.out.println(file.getAbsolutePath());
+            name = name + file.getAbsolutePath();
+            System.out.println(name);
+
+            String[] info = diskRead(0,name);
+
+            String[] newArray = Arrays.copyOfRange(info, 72, 76);
+            String s1=optimize(reverse(newArray));
+            System.out.println("Серийный номер диска: ");
+            System.out.println(s1);
+
+            name ="\\\\.\\";
+            System.out.println();
         }
     }
 
@@ -394,18 +359,18 @@ public class Main {
 
     public static long sector(String[] newArray){
         String hexVar = newArray[1];
-        if(hexVar.compareTo("40")<0){ // When sector value is less than 40
-            return ((((hex2decimal(newArray[2])*255)+hex2decimal(newArray[0]))*63)+(hex2decimal(newArray[1])-1));// returns sector number
+        if(hexVar.compareTo("40")<0){
+            return ((((hex2decimal(newArray[2])*255)+hex2decimal(newArray[0]))*63)+(hex2decimal(newArray[1])-1));
         }
-        else{  //When sector greater than or equal to 40
+        else {
             String sec = hex2binary(newArray[1]);
-            String msb = sec.substring(0,2);// extracts 2 most significant bits in a variable msb
-            sec=sec.substring(2); //removes 2 most significant bits from sector value
+            String msb = sec.substring(0,2);
+            sec=sec.substring(2);
 
-            String cylinder = msb+hex2binary(newArray[2]);//attaches msb at the start of the binary value of cylinder
-            long s=Integer.parseInt(sec,2);// calculates sector value in decimal
-            long c=Integer.parseInt(cylinder,2);//calculates cylinder value in decimal
-            return (((c*255)+hex2decimal(newArray[0]))*63)+(s-1);// returns sector number
+            String cylinder = msb+hex2binary(newArray[2]);
+            long s=Integer.parseInt(sec,2);
+            long c=Integer.parseInt(cylinder,2);
+            return (((c*255)+hex2decimal(newArray[0]))*63)+(s-1);
         }
     }
 
@@ -421,14 +386,14 @@ public class Main {
 
     public static String[] diskRead(long n, String driveName) throws FileNotFoundException, IOException{
         String s;
-        RandomAccessFile raf = null;
+        RandomAccessFile raf;
         StringBuilder result = new StringBuilder();
         try{
             raf = new RandomAccessFile(driveName,"r");
             byte [] block = new byte [512];
-            raf.seek(n); //Starting point from where disk reading should begin
+            raf.seek(n);
             raf.readFully(block);
-            s=bytesToHex(block); // bytesToHex() converts bytes data to HEX
+            s=bytesToHex(block);
             for (int i = 0; i < s.length(); i++) {
                 if (i > 0 && i%2==0) {
                     result.append(" ");
@@ -448,5 +413,5 @@ public class Main {
         String[] parts = s.split(" ");
         return parts;
     }
-
 }
+
