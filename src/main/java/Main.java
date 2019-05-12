@@ -7,10 +7,46 @@ import java.util.Arrays;
 
 public class Main {
 
+    public static void parseSector(String[] parts, int part, int sizeFrom, int sizeTo,
+                            int infoFrom, int infoTo,
+                            int startFrom, int startTo,
+                            int endFrom, int endTo) {
+        long start;
+        long end;
+        partitionType(parts[part]);
+        String[] newArray = Arrays.copyOfRange(parts, sizeFrom, sizeTo);
+        String s1=optimize(reverse(newArray));
 
-    public static void main(String[] args) throws FileNotFoundException, IOException {
+        long a=hex2decimal(s1);
+        long size=(((a)*512)/1024)/1024;
 
-        getLocalInfo();
+        newArray = Arrays.copyOfRange(parts, infoFrom, infoTo);
+        if(newArray[0].equals("FE") && newArray[1].equals("FF") && newArray[2].equals("FF")) {
+            String[] newArray1=Arrays.copyOfRange(parts, startFrom, startTo);
+            start=(hex2decimal(optimize(reverse(newArray1))));
+            System.out.println("Начало сектора: "+start);
+            end=(start+a)-1;
+            System.out.println("Конец сектора: "+end);
+            System.out.println("Размер сектора: "+size+" MB");
+            System.out.println("\n");
+        }
+        else {
+            start=sector(newArray);
+            newArray = Arrays.copyOfRange(parts, endFrom, endTo);
+            if(newArray[0].equals("FE") && newArray[1].equals("FF") && newArray[2].equals("FF")){
+                end=(start+a)-1;
+            }
+            else {
+                end=sector(newArray);
+            }
+            System.out.println("Начало сектора: "+start);
+            System.out.println("Ending sector: "+end);
+            System.out.println("Размер раздела: "+size+" MB");
+            System.out.println("\n");
+        }
+    }
+
+    public static void main(String[] args) throws IOException {
         String driveName = "\\\\.\\PhysicalDrive0";
         String[] parts=diskRead(0,driveName);
 
@@ -18,149 +54,34 @@ public class Main {
         System.out.println();
 
         if((parts[450].equals("EE")) || (parts[450].equals("ee"))){
-            System.out.println("The Drive does not have MBR partitioning Style. It has GPT Partitioning Style");
-            System.out.println("Press Enter to Exit");
+            System.out.println("Диск не поддерживает MBR");
+            System.out.println("Нажмите Энтер для выхода");
             System.in.read();
         }
         else{
             System.out.println("Раздел 1");
-            long start1,end1,start2,end2,start3,end3,start4,end4,st1,en1;
-
-            partitionType(parts[450]);
-            String[] newArray = Arrays.copyOfRange(parts, 458, 462);
-            String s1=optimize(reverse(newArray));
-
-            long a=hex2decimal(s1);
-            long size=(((a)*512)/1024)/1024;
-            newArray = Arrays.copyOfRange(parts, 447, 450);
-            if(newArray[0].equals("FE") && newArray[1].equals("FF") && newArray[2].equals("FF")) {
-                String[] newArray1=Arrays.copyOfRange(parts, 454, 458);
-                start1=(hex2decimal(optimize(reverse(newArray1))));
-                System.out.println("Начало сектора: "+start1);
-                end1=(start1+a)-1;
-                System.out.println("Конец сектора: "+end1);
-                System.out.println("Размер сектора: "+size+" MB");
-                System.out.println("\n");
-            }
-            else {
-                start1=sector(newArray);
-                newArray = Arrays.copyOfRange(parts, 451, 454);
-                if(newArray[0].equals("FE") && newArray[1].equals("FF") && newArray[2].equals("FF")){
-                    end1=(start1+a)-1;
-                }
-                else {
-                    end1=sector(newArray);
-                }
-                System.out.println("Начало сектора: "+start1);
-                System.out.println("Ending sector: "+end1);
-                System.out.println("Partition Size: "+size+" MB");
-                System.out.println("\n");
-            }
-
-
+            parseSector(parts, 450, 458, 462, 447, 450, 454, 458, 451, 454);
             System.out.println("Раздел 2");
-            partitionType(parts[466]);
-            newArray = Arrays.copyOfRange(parts, 474, 478);
-            s1=optimize(reverse(newArray));
-            long b=hex2decimal(s1);
-            size=(((b)*512)/1024)/1024;
-            newArray = Arrays.copyOfRange(parts, 463, 466);
-            if(newArray[0].equals("FE") && newArray[1].equals("FF") && newArray[2].equals("FF")){
-                String[] newArray1=Arrays.copyOfRange(parts, 470, 474);
-                start2=(hex2decimal(optimize(reverse(newArray1))));
-                System.out.println("Начало сектора: "+start2);
-                end2=(start2+b)-1;
-                System.out.println("Ending sector: "+end2);
-                System.out.println("Partition Size: "+size+" MB");
-                System.out.println("\n");
-            }
-            else{
-                start2=sector(newArray);
-                newArray = Arrays.copyOfRange(parts, 467, 470);
-
-                if(newArray[0].equals("FE") && newArray[1].equals("FF") && newArray[2].equals("FF")){
-                    end2=(start2+b)-1;
-                }
-                else{
-                    end2=sector(newArray);}
-                if(!(parts[466].equals("00")))
-                {
-                    System.out.println("Начало сектора: "+start2);
-                    System.out.println("Ending sector: "+end2);
-                    System.out.println("Partition Size: "+size+" MB");}
-                System.out.println("\n");
-            }
-
+            parseSector(parts, 466, 474, 478, 463, 466, 470, 474, 467, 470);
             System.out.println("Раздел 3");
-            partitionType(parts[482]);
-            newArray = Arrays.copyOfRange(parts, 490, 494);
-            s1=optimize(reverse(newArray));
-            long c=hex2decimal(s1);
-            size=(((c)*512)/1024)/1024;
-            newArray = Arrays.copyOfRange(parts, 479, 482);
-            if(newArray[0].equals("FE") && newArray[1].equals("FF") && newArray[2].equals("FF")){
-                String[] newArray1=Arrays.copyOfRange(parts, 486, 490);
-                start3=(hex2decimal(optimize(reverse(newArray1))));
-                System.out.println("Начало сектора: "+start3);
-                end3=(start3+c)-1;
-                System.out.println("Ending sector: "+end3);
-                System.out.println("Partition Size: "+size+" MB");
-                System.out.println("\n");
-            }
-            else{
-                start3=sector(newArray);
-                newArray = Arrays.copyOfRange(parts, 483, 486);
-                if(newArray[0].equals("FE") && newArray[1].equals("FF") && newArray[2].equals("FF")){
-                    end3=(start3+c)-1;
-                }
-                else{
-                    end3=sector(newArray);}
-                if(!(parts[482].equals("00"))){
-                    System.out.println("Начало сектора: "+start3);
-                    System.out.println("Ending sector: "+end3);
-                    System.out.println("Partition Size: "+size+" MB");}
-                System.out.println("\n");
-
-            }
-
+            parseSector(parts, 482, 490, 494, 479, 482, 486, 490, 483, 486);
             System.out.println("Раздел 4");
-            partitionType(parts[498]);
-            newArray = Arrays.copyOfRange(parts, 506, 510);
-            s1=optimize(reverse(newArray));
-            long d=hex2decimal(s1);
-            size=(((d)*512)/1024)/1024;
-            newArray = Arrays.copyOfRange(parts, 495, 498);
-            if(newArray[0].equals("FE") && newArray[1].equals("FF") && newArray[2].equals("FF")){
-                String[] newArray1=Arrays.copyOfRange(parts, 502, 506);
-                start4=(hex2decimal(optimize(reverse(newArray1))));
-                System.out.println("Начало сектора: "+start4);
-                end4=(start4+d)-1;
-                System.out.println("Ending sector: "+end4);
-                System.out.println("Partition Size: "+size+" MB");
-                System.out.println("\n");
-            }
-            else{
-                start4=sector(newArray);
-                newArray = Arrays.copyOfRange(parts, 499, 502);
-                if(newArray[0].equals("FE") && newArray[1].equals("FF") && newArray[2].equals("FF")){
-                    end4=(start4+d)-1;
-                }
-                else{
-                    end4=sector(newArray);}
-                if(!(parts[498].equals("00"))){
-                    System.out.println("Начало сектора: "+start4);
-                    System.out.println("Ending sector: "+end4);
-                    System.out.println("Partition Size: "+size+" MB");}
-                System.out.println("\n");
-            }
+            parseSector(parts, 498, 506, 510, 495, 498, 502, 506, 499, 502);
 
+            getLocalInfo();
 
             if(parts[498].equals("05")){
+                String[] newArray;
+                String s1;
+                long st1;
+                long en1;
+                long size;
+                long start = 0;
                 int i=1;
                 System.out.println("Расширеные разделы");
                 do{
-                    System.out.println("Extended partition "+i);
-                    parts=diskRead((start4)*512,driveName);
+                    System.out.println("Расширеный раздел "+i);
+                    parts=diskRead((start)*512,driveName);
                     partitionType(parts[450]);
                     newArray = Arrays.copyOfRange(parts, 458, 462);
                     s1=optimize(reverse(newArray));
@@ -169,46 +90,44 @@ public class Main {
                     newArray = Arrays.copyOfRange(parts, 447, 450);
                     if(newArray[0].equals("FE") && newArray[1].equals("FF") && newArray[2].equals("FF")){
                         String[] newArray1=Arrays.copyOfRange(parts, 454, 458);
-                        st1=(hex2decimal(optimize(reverse(newArray1))))+start4;
+                        st1=(hex2decimal(optimize(reverse(newArray1))))+start;
                         System.out.println("Начало сектора: "+st1);
                         en1=(st1+a1)-1;
-                        System.out.println("Ending sector: "+en1);
-                        System.out.println("Partition Size: "+size+" MB");
+                        System.out.println("Конец сектора: "+en1);
+                        System.out.println("Размер сектора: "+size+" MB");
                         System.out.println("\n");
                     }
                     else{
-                        st1=sector(newArray)+start4;
+                        st1=sector(newArray)+start;
                         System.out.println("Начало сектора: "+st1);
                         newArray = Arrays.copyOfRange(parts, 451, 454);
                         if(newArray[0].equals("FE") && newArray[1].equals("FF") && newArray[2].equals("FF")){
                             en1=((st1+a1)-1);
                         }
                         else{
-                            en1=sector(newArray)+start4;}
-                        System.out.println("Ending sector: "+en1);
-                        System.out.println("Partition Size: "+size+" MB");
+                            en1=sector(newArray)+start;}
+                        System.out.println("Конец сектора: "+en1);
+                        System.out.println("Размер сектора: "+size+" MB");
                         System.out.println("\n");
                     }
                     i++;
-                    start4=en1+1;
+                    start=en1+1;
                 }while(parts[466].equals("05"));
-
             }
 
-            size=(((a+b+c+d)*512)/1024)/1024;
-            System.out.println("Общий размер: "+size+" MB");
             System.out.println("Нажмите энтер чтобы выйти");
             System.in.read();
         }
     }
 
+
     public static void getLocalInfo() throws IOException {
+        System.out.println("Логические диски:");
         File[] roots = File.listRoots();
         String name ="\\\\.\\";
         for (File file: roots) {
             System.out.println(file.getAbsolutePath());
             name = name + file.getAbsolutePath();
-            System.out.println(name);
 
             String[] info = diskRead(0,name);
 
@@ -232,7 +151,6 @@ public class Main {
         return validData;
     }
 
-
     public static String optimize(String[] newArray){
         String str=Arrays.toString(newArray);
         str=str.replace("[", "");
@@ -241,7 +159,6 @@ public class Main {
         str=str.replace(" ", "");
         return str;
     }
-
 
     public static int hex2decimal(String s) {
         String digits = "0123456789ABCDEF";
@@ -254,8 +171,6 @@ public class Main {
         }
         return val;
     }
-
-
 
     public static String hex2binary(String s) {
         String result = "";
@@ -314,48 +229,43 @@ public class Main {
                     binVal = "1111";
                     break;
                 default:
-                    binVal = "invalid input";
+                    binVal = "некорректное число";
                     break;
-
-
             }
             result += binVal;
         }
         return result;
     }
 
-
     public static void partitionType(String s){
 
-        if(s.equals("07")){ System.out.println("Partition Type: NTFS");
+        if(s.equals("07")){ System.out.println("Тип раздела: NTFS");
         }
-        else if(s.equals("0C")){ System.out.println("Partition Type: FAT32, INT 13 Extensions");
+        else if(s.equals("0C")){ System.out.println("Тип раздела: FAT32, INT 13 Extensions");
         }
-        else if(s.equals("0B")){ System.out.println("Partition Type: FAT32");
+        else if(s.equals("0B")){ System.out.println("Тип раздела: FAT32");
         }
-        else if(s.equals("06")){ System.out.println("Partition Type: FAT16");
+        else if(s.equals("06")){ System.out.println("Тип раздела: FAT16");
         }
-        else if(s.equals("0E")){ System.out.println("Partition Type: FAT");
+        else if(s.equals("0E")){ System.out.println("Тип раздела: FAT");
         }
-        else if(s.equals("27")){ System.out.println("Partition Type: Reserved");
+        else if(s.equals("27")){ System.out.println("Тип раздела: Reserved");
         }
-        else if(s.equals("82")){ System.out.println("Partition Type: Linux Swap partition");
+        else if(s.equals("82")){ System.out.println("Тип раздела: Linux Swap partition");
         }
-        else if(s.equals("83")){ System.out.println("Partition Type: Linux native file systems");
+        else if(s.equals("83")){ System.out.println("Тип раздела: Linux native file systems");
         }
-        else if(s.equals("42")){ System.out.println("Partition Type: Secure File System");
+        else if(s.equals("42")){ System.out.println("Тип раздела: Secure File System");
         }
-        else if(s.equals("05")){ System.out.println("Partition Type: Extended");
+        else if(s.equals("05")){ System.out.println("Тип раздела: Extended");
         }
-        else if(s.equals("0F")){ System.out.println("Partition Type: Extended, INT 13 Extensions ");
+        else if(s.equals("0F")){ System.out.println("Тип раздела: Extended, INT 13 Extensions ");
         }
-        else if(s.equals("00")){ System.out.println("Empty Partition Entry");
+        else if(s.equals("00")){ System.out.println("Пустой раздел");
         }
-        else { System.out.println("Unknown Partitioning Style");
+        else { System.out.println("Неизвестный тип");
         }
     }
-
-
 
     public static long sector(String[] newArray){
         String hexVar = newArray[1];
@@ -374,7 +284,6 @@ public class Main {
         }
     }
 
-
     public static String bytesToHex(byte[] in) {
         final StringBuilder builder = new StringBuilder();
         for(byte b : in) {
@@ -382,7 +291,6 @@ public class Main {
         }
         return builder.toString();
     }
-
 
     public static String[] diskRead(long n, String driveName) throws FileNotFoundException, IOException{
         String s;
@@ -402,8 +310,8 @@ public class Main {
             }
         }
         catch(FileNotFoundException e)
-        {System.out.println("No Such drive exists");
-            System.out.println("Press Enter to Exit");
+        {System.out.println("Такого диска нет");
+            System.out.println("Нажмите Энтер чтобы выйти");
             System.in.read();
             System.exit(0);
         }
