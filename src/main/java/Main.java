@@ -7,18 +7,19 @@ import java.util.Arrays;
 
 public class Main {
 
+    //Парсим разделы (которых 4)
     public static void parseSector(String[] parts, int part, int sizeFrom, int sizeTo,
                             int infoFrom, int infoTo,
                             int startFrom, int startTo,
                             int endFrom, int endTo) {
-        long start;
-        long end;
+        long start; //начало сектора
+        long end; //конец
         partitionType(parts[part]);
         String[] newArray = Arrays.copyOfRange(parts, sizeFrom, sizeTo);
         String s1=optimize(reverse(newArray));
 
         long a=hex2decimal(s1);
-        long size=(((a)*512)/1024)/1024;
+        long size=(((a)*512)/1024)/1024; //размер раздела
 
         newArray = Arrays.copyOfRange(parts, infoFrom, infoTo);
         if(newArray[0].equals("FE") && newArray[1].equals("FF") && newArray[2].equals("FF")) {
@@ -40,7 +41,7 @@ public class Main {
                 end=sector(newArray);
             }
             System.out.println("Начало сектора: "+start);
-            System.out.println("Ending sector: "+end);
+            System.out.println("Конец сектора: "+end);
             System.out.println("Размер раздела: "+size+" MB");
             System.out.println("\n");
         }
@@ -48,18 +49,19 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
         String driveName = "\\\\.\\PhysicalDrive0";
-        String[] parts=diskRead(0,driveName);
+        String[] parts=diskRead(0,driveName); //читаем ЖД как файл
+
 
         System.out.println("Имя физического диска: " + driveName);
         System.out.println();
 
-        if((parts[450].equals("EE")) || (parts[450].equals("ee"))){
+        if((parts[450].equals("EE")) || (parts[450].equals("ee"))){ //проверка на МБР
             System.out.println("Диск не поддерживает MBR");
             System.out.println("Нажмите Энтер для выхода");
             System.in.read();
         }
         else{
-            System.out.println("Раздел 1");
+            System.out.println("Раздел 1"); //Парсим разделы
             parseSector(parts, 450, 458, 462, 447, 450, 454, 458, 451, 454);
             System.out.println("Раздел 2");
             parseSector(parts, 466, 474, 478, 463, 466, 470, 474, 467, 470);
@@ -68,9 +70,9 @@ public class Main {
             System.out.println("Раздел 4");
             parseSector(parts, 498, 506, 510, 495, 498, 502, 506, 499, 502);
 
-            getLocalInfo();
+            getLocalInfo(); //инфа о томах
 
-            if(parts[498].equals("05")){
+            if(parts[498].equals("05")){ //Проверка на то, расширенный ли раздел или обычный (вроде как расширеных быть не должно)
                 String[] newArray;
                 String s1;
                 long st1;
@@ -86,7 +88,7 @@ public class Main {
                     newArray = Arrays.copyOfRange(parts, 458, 462);
                     s1=optimize(reverse(newArray));
                     long a1=hex2decimal(s1);
-                    size=(((a1)*512)/1024)/1024;
+                    size=(((a1)*512)/1024)/1024; //размер раздела
                     newArray = Arrays.copyOfRange(parts, 447, 450);
                     if(newArray[0].equals("FE") && newArray[1].equals("FF") && newArray[2].equals("FF")){
                         String[] newArray1=Arrays.copyOfRange(parts, 454, 458);
@@ -120,18 +122,18 @@ public class Main {
         }
     }
 
-
+    //Инфа о локальных дисках (имена и серийники)
     public static void getLocalInfo() throws IOException {
         System.out.println("Логические диски:");
-        File[] roots = File.listRoots();
+        File[] roots = File.listRoots(); //Получение списка логических дисков в джаве (но логические диски всегда 0-го физического диска, как других - хз)
         String name ="\\\\.\\";
         for (File file: roots) {
             System.out.println(file.getAbsolutePath());
             name = name + file.getAbsolutePath();
 
-            String[] info = diskRead(0,name);
+            String[] info = diskRead(0,name); //Читаем томы (как и физ диск до этого)
 
-            String[] newArray = Arrays.copyOfRange(info, 72, 76);
+            String[] newArray = Arrays.copyOfRange(info, 72, 76); //вырезаем серийник
             String s1=optimize(reverse(newArray));
             System.out.println("Серийный номер диска: ");
             System.out.println(s1);
@@ -141,9 +143,9 @@ public class Main {
         }
     }
 
+    //Делаем в другом порядке
     public static String[] reverse(String[] validData){
-        for(int i = 0; i < validData.length / 2; i++)
-        {
+        for(int i = 0; i < validData.length / 2; i++) {
             String temp = validData[i];
             validData[i] = validData[validData.length - i - 1];
             validData[validData.length - i - 1] = temp;
@@ -151,6 +153,7 @@ public class Main {
         return validData;
     }
 
+    //Хз, строку читабельной делает
     public static String optimize(String[] newArray){
         String str=Arrays.toString(newArray);
         str=str.replace("[", "");
@@ -160,6 +163,7 @@ public class Main {
         return str;
     }
 
+    //Из 2-ки в 10-ку
     public static int hex2decimal(String s) {
         String digits = "0123456789ABCDEF";
         s = s.toUpperCase();
@@ -172,6 +176,7 @@ public class Main {
         return val;
     }
 
+    //Из 16-ки в 2-ку
     public static String hex2binary(String s) {
         String result = "";
         String binVal;
@@ -237,6 +242,7 @@ public class Main {
         return result;
     }
 
+    //Тип раздела (которых 4)
     public static void partitionType(String s){
 
         if(s.equals("07")){ System.out.println("Тип раздела: NTFS");
@@ -267,6 +273,7 @@ public class Main {
         }
     }
 
+    //какая-то инфа о секторах, размер мб
     public static long sector(String[] newArray){
         String hexVar = newArray[1];
         if(hexVar.compareTo("40")<0){
@@ -284,6 +291,7 @@ public class Main {
         }
     }
 
+    //байты в 16-ку
     public static String bytesToHex(byte[] in) {
         final StringBuilder builder = new StringBuilder();
         for(byte b : in) {
@@ -292,19 +300,22 @@ public class Main {
         return builder.toString();
     }
 
+    //Чтение диска как файла (используется в проге как для чтения жеских, так и для локальных, принцип один +-)
     public static String[] diskRead(long n, String driveName) throws FileNotFoundException, IOException{
         String s;
         RandomAccessFile raf;
         StringBuilder result = new StringBuilder();
+
         try{
             raf = new RandomAccessFile(driveName,"r");
             byte [] block = new byte [512];
-            raf.seek(n);
-            raf.readFully(block);
+            raf.seek(n); //идем к нужной позиции
+            raf.readFully(block); //Читаем те 512 байт файла в байт-массив
+
             s=bytesToHex(block);
             for (int i = 0; i < s.length(); i++) {
                 if (i > 0 && i%2==0) {
-                    result.append(" ");
+                    result.append(" "); //пробелы в таблице (для красоты)
                 }
                 result.append(s.charAt(i));
             }
@@ -318,7 +329,7 @@ public class Main {
         s=result.toString();
         s=s.toUpperCase();
 
-        String[] parts = s.split(" ");
+        String[] parts = s.split(" "); //бьем по пробелам и записываем в массив строк
         return parts;
     }
 }
